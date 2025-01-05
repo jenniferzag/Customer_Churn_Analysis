@@ -26,7 +26,7 @@ This project analyzes customer churn trends using the Telco Customer Churn datas
 
 ## How to Run the Analysis
 1. Clone this repository:
-https://github.com/your-username/Customer_Churn_Analysis.git
+https://github.com/jenniferzag/Customer_Churn_Analysis.git
 
 2. Open `CustomerSuccessAnalytics.Rmd` in RStudio.
 3. Run the R Markdown file or knit it into a PDF/HTML.
