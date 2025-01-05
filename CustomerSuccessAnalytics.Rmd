@@ -1,0 +1,227 @@
+---
+title: "Customer Success Analytics"
+author: "Jennifer Amador-Gonzalez"
+date: "2025-01-03"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load and Explore Data
+
+```{r}
+#installying and loading necessary library
+library(tidyverse)
+
+#leading dataset from files
+file_path <- "/Users/jenniferamador/Downloads/telco.csv"
+telco_data <-  read_csv(file_path)
+
+#exploring dataset
+head(telco_data) #first few rows
+glimpse(telco_data) #structure and data types
+summary(telco_data) # summary statistics
+
+#Goal
+#check for potential missing values
+#understand column data types (categorical vs. numerical)
+#identify. the targeet variable (churn) and key predictors (ex: tenure, monthly charges)
+        
+```
+
+## Clean Data
+
+```{r}
+#handle missing values
+telco_clean <- telco_data %>% mutate(`Total Charges`=as.numeric(`Total Charges`)) #ensure to convert to numeric
+telco_clean <- telco_data %>% drop_na() #drop any rows with missing values
+
+#convert categorical variables to numerical
+telco_clean <- telco_data %>% mutate(`Churn` = ifelse(`Churn Label`== "Yes", 1, 0)) #target variable
+
+#Goals
+#Handle missing values
+#convert categorical variables to numerical for potential modeling
+```
+
+
+##Exploratory Data Analysis (EDA)
+```{r}
+#load necessary library
+library(ggplot2)
+
+#churn distribution
+ggplot(telco_clean,aes (x = factor(Churn))) + geom_bar() + labs(title = "Churn Distribution", x = "Churn",  y= "Count")
+```
+
+Observations:
+The majority of customers (non-churners) do not churn (label 0).
+Churners (label 1) make up a smaller proportion of the dataset.
+Insight:
+This indicates class imbalance, which is common in churn datasets and should be addressed in modeling (e.g., using balanced sampling or weighted metrics).
+
+
+
+```{r}
+#Correlation heatmap
+library(corrplot)
+cor_data <- telco_clean %>% select(where(is.numeric))
+cor_matrix <- cor(cor_data)
+corrplot(cor_matrix, method = "color", type = "upper", tl.col = "black", tl.srt = 45)
+
+# Goals:
+# Analyze the distribution of churn.
+# Identify trends in numerical variables like tenure, MonthlyCharges, etc.
+# Visualize correlations between variables.
+```
+
+Objective: The correlation heatmap shows the relationship between numerical features and the target variable (Churn).
+Insights:
+Tenure in Months has a strong negative correlation with Churn. Employees with longer tenure are less likely to churn.
+Monthly Charge shows a positive correlation with Churn. Customers paying higher monthly charges are more likely to churn.
+Satisfaction Score and Churn are negatively correlated, indicating dissatisfied employees or customers are more likely to leave.
+Churn Score has a strong positive correlation with Churn, suggesting it’s a reliable predictor for attrition.
+Actionable Steps:
+
+Focus on improving retention strategies for newer employees/customers.
+Evaluate pricing plans for high-paying customers to understand if they perceive value for money.
+Improve customer satisfaction by identifying pain points in services.
+
+
+
+##Build a Predictive Model
+
+```{r}
+# Split data into train and test sets
+library(caret)
+set.seed(42)
+train_index <- createDataPartition(telco_clean$Churn, p = 0.7, list = FALSE)
+train <- telco_clean[train_index, ]
+test <- telco_clean[-train_index, ]
+
+# Train a logistic regression model
+model <- glm(Churn ~ `Tenure in Months` + `Monthly Charge` + `Total Charges`, data = train, family = "binomial")
+
+# Evaluate the model
+summary(model)
+pred <- predict(model, test, type = "response")
+conf_matrix <- table(Predicted = ifelse(pred > 0.5, 1, 0), Actual = test$Churn)
+conf_matrix
+# Goals:
+# Train a simple logistic regression model to predict churn.
+# Identify the most important predictors of churn.
+```
+
+Observations:
+Significant predictors (p < 0.05):
+Tenure in Months (negative coefficient): Longer tenure reduces churn likelihood.
+Monthly Charge (positive coefficient): Higher charges increase churn likelihood.
+Non-significant predictor:
+Total Charges: Likely collinear with Tenure in Months.
+Insight:
+Focus on improving tenure and addressing high monthly charges to reduce churn.
+
+
+## Data Vizualizations
+
+
+#Bar Chart: Show churn rates by contract type
+
+```{r}
+#Bar Chart: Show churn rates by contract type
+library(ggplot2)
+
+# Bar chart of churn rates by contract type
+ggplot(telco_clean, aes(x = Contract, fill = factor(Churn))) +
+  geom_bar(position = "dodge") +
+  labs(title = "Churn Rates by Contract Type", x = "Contract Type", y = "Count") +
+  scale_fill_manual(values = c("#00BFC4", "#F8766D"), name = "Churn", labels = c("No", "Yes"))
+```
+
+Observations:
+Customers with month-to-month contracts churn the most.
+Churn rates are much lower for one-year and two-year contracts.
+Insight:
+Long-term contracts reduce churn, possibly due to commitment and incentives.
+
+
+#Box Plot: Compare tenure between churned and non-churned customers.
+
+```{r}
+# Box plot of tenure by churn
+ggplot(telco_clean, aes(x = factor(Churn), y = `Tenure in Months`, fill = factor(Churn))) +
+  geom_boxplot() +
+  labs(title = "Tenure by Churn", x = "Churn", y = "Tenure (Months)") +
+  scale_fill_manual(values = c("#00BFC4", "#F8766D"), name = "Churn", labels = c("No", "Yes"))
+```
+
+Observations:
+Non-churners (Churn = No) have significantly longer tenure, as indicated by the wider interquartile range and higher median.
+Churners (Churn = Yes) have shorter tenure overall.
+Insight:
+Shorter tenure is a strong indicator of churn, possibly due to dissatisfaction or lack of engagement early in the customer lifecycle.
+
+
+#Heatmap: Correlation matrix for numerical variables.
+
+```{r}
+library(corrplot)
+
+# Calculate correlation matrix
+num_data <- telco_clean %>% select(`Tenure in Months`, `Monthly Charge`, `Total Charges`, Churn)
+cor_matrix <- cor(num_data)
+
+# Create a heatmap
+corrplot(cor_matrix, method = "color", type = "upper", tl.col = "black", tl.srt = 45,
+         title = "Correlation Heatmap")
+```
+
+Observations:
+Tenure in Months is negatively correlated with churn, confirming the insights from the box plot.
+Monthly Charge has a slight positive correlation with churn.
+Total Charges has a weak correlation with churn, likely because it reflects tenure.
+Insight:
+Tenure is a key predictor, while Monthly Charge may influence churn when combined with other factors.
+
+
+# Scatter plot of Monthly Charges vs. Total Charges
+
+```{r}
+#ScatterPlot
+ggplot(telco_clean, aes(x = `Monthly Charge`, y = `Total Charges`, color = factor(Churn))) +
+  geom_point(alpha = 0.6) +
+  labs(title = "Monthly Charges vs. Total Charges", x = "Monthly Charges", y = "Total Charges") +
+  scale_color_manual(values = c("#00BFC4", "#F8766D"), name = "Churn", labels = c("No", "Yes"))
+```
+
+Observations:
+A linear trend is visible between Monthly Charge and Total Charges for non-churners and churners.
+Churners are distributed across all ranges of monthly charges but seem more concentrated in lower total charges.
+Insight:
+Customers with lower cumulative charges (shorter tenure) tend to churn more.
+
+# Histogram of Monthly Charges
+
+```{r}
+# Histogram
+ggplot(telco_clean, aes(x = `Monthly Charge`, fill = factor(Churn))) +
+  geom_histogram(bins = 30, alpha = 0.7, position = "identity") +
+  labs(title = "Distribution of Monthly Charges by Churn", x = "Monthly Charges", y = "Count") +
+  scale_fill_manual(values = c("#00BFC4", "#F8766D"), name = "Churn", labels = c("No", "Yes"))
+```
+
+Objective: The histogram compares the distribution of monthly charges for churned (Yes) vs. non-churned (No) customers.
+Insights:
+Customers with lower monthly charges (around $20–$40) tend to churn less frequently.
+A higher proportion of churned customers are observed in the $70–$100 range.
+The distribution suggests that higher charges may be a significant factor in customer attrition.
+Actionable Steps:
+Offer customized retention plans for high-paying customers.
+Consider offering discounts or value-added services to customers in the higher charge brackets.
+Investigate if the features/services offered at higher price points meet customer expectations.
+
+
