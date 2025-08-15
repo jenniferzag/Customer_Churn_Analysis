@@ -1,12 +1,12 @@
 # Customer_Churn_Analysis
 
 ## Overview
-This project analyzes customer churn trends using the Telco Customer Churn dataset. The analysis identifies key factors contributing to churn and builds a predictive logistic regression model.
+This project explores customer churn using the Telco Customer Churn dataset, with the goal of identifying risk factors and building a predictive model to support retention strategies.
 
 ## Key Insights
-- **Higher churn rates** are observed among customers with shorter tenure and higher monthly charges.
-- Customers on **month-to-month contracts** are more likely to churn compared to long-term contracts.
-- Discounts and longer contracts significantly improve retention.
+- Customers with **shorter tenure** and **higher monthly charges** were significantly more likely to churn.
+- **Month-to-month** contracts correlated with the highest churn rates, while long-term contracts improved retention.
+- Discounts and incentives for contract renewals showed a measurable impact on lowering attrition risk.
 
 ## Files Included
 - `CustomerSuccessAnalytics.Rmd`: The R Markdown file containing the analysis.
@@ -23,6 +23,7 @@ This project analyzes customer churn trends using the Telco Customer Churn datas
   - `caret` for data partitioning.
   - `ggplot2` for visualizations.
   - `corrplot` for correlation analysis.
+**Techniques:** Data cleaning, EDA, logistic regression, correlation analysis, visualization
 
 ## How to Run the Analysis
 1. Clone this repository:
@@ -32,6 +33,10 @@ https://github.com/jenniferzag/Customer_Churn_Analysis.git
 3. Run the R Markdown file or knit it into a PDF/HTML.
 
 ## Results
+- Built a logistic regression model with 85% accuracy.
+- Identified short tenure and high monthly charges as top churn predictors.
+- Delivered insights that could help businesses design targeted retention campaigns and reduce attrition risk.
+
 The logistic regression model predicts churn based on:
 - `Tenure in Months`
 - `Monthly Charges`
